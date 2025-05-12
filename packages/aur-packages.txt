@@ -1,0 +1,18 @@
+# List of explicitly installed AUR packages
+# Generated on Mon May  5 08:34:53 PM CST 2025
+# Format: package_name
+arc-gtk-theme
+awsvpnclient
+batify
+cursor-bin
+google-chrome
+keybase-bin
+light
+nosql-workbench
+pgadmin4-desktop
+postman-bin
+slack-desktop
+ttf-joypixels
+w3m-imgcat
+yay
+zoom
