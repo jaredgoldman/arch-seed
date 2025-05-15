@@ -52,6 +52,10 @@ sudo ./install/scripts/configure-network.sh --env || error_exit "Failed to confi
 print_msg "Setting up development environment..."
 ./install/scripts/setup-dev-env.sh
 
+# Run the Node.js tools setup script
+print_msg "Setting up Node.js tools..."
+./install/scripts/setup-node-tools.sh
+
 # Run the CLI tools and security setup script
 print_msg "Setting up CLI tools and security..."
 ./install/scripts/setup-cli-tools.sh
@@ -59,3 +63,7 @@ print_msg "Setting up CLI tools and security..."
 # Run the AWS CLI and Font Awesome setup script
 print_msg "Setting up AWS CLI and Font Awesome..."
 ./install/scripts/setup-aws-fonts.sh
+
+# Run the i3 setup script
+print_msg "Setting up i3 window manager..."
+./install/scripts/setup-i3.sh
