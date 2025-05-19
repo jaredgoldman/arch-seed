@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -euo pipefail
+set -x
 
 # Default partitioning scheme for a typical desktop installation
 # Expects disk as first argument
