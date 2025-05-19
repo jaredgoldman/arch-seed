@@ -37,6 +37,10 @@ parted "$disk" mkpart primary linux-swap 513MiB 17.5GiB
 # Root partition (remaining space)
 parted "$disk" mkpart primary ext4 17.5GiB 100%
 
+# Force kernel to reread partition table
+partprobe "$disk"
+sleep 2
+
 # Format partitions
 mkfs.fat -F32 "${disk}${partprefix}1"
 mkswap "${disk}${partprefix}2"
