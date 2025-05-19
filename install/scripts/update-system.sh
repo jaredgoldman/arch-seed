@@ -66,7 +66,7 @@ check_disk_space() {
 # Function to check for conflicting packages
 check_conflicts() {
   print_msg "Checking for package conflicts..."
-  pacman -Qkk 2>/dev/null || true
+  sudo pacman -Qkk 2>/dev/null || true
 }
 
 # Function to update system
@@ -74,10 +74,10 @@ update_system() {
   print_msg "Updating system..."
   
   # Update package database
-  pacman -Sy
+  sudo pacman -Sy
   
   # Check for updates
-  if ! pacman -Qu; then
+  if ! sudo pacman -Qu; then
     print_msg "System is up to date"
     return 0
   fi
@@ -86,7 +86,7 @@ update_system() {
   create_backup
   
   # Update packages
-  pacman -Syu --noconfirm
+  sudo pacman -Syu --noconfirm
   
   # Update AUR packages if yay is installed
   if command -v yay &> /dev/null; then
@@ -100,15 +100,15 @@ cleanup() {
   print_msg "Cleaning up..."
   
   # Remove old packages
-  pacman -Sc --noconfirm
+  sudo pacman -Sc --noconfirm
   
   # Remove old kernels
   if command -v pacman-remove-orphans &> /dev/null; then
-    pacman-remove-orphans
+    sudo pacman-remove-orphans
   fi
   
   # Clean package cache
-  paccache -r
+  sudo paccache -r
 }
 
 # Main function

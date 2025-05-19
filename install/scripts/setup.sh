@@ -44,7 +44,7 @@ if [ ! -f "$PACMAN_LIST" ] || [ ! -s "$PACMAN_LIST" ]; then
     echo "# Generated on $(date)" >> "$PACMAN_LIST"
     echo "# Format: package_name" >> "$PACMAN_LIST"
     # Get explicitly installed pacman packages
-    pacman -Qen | awk '{print $1}' >> "$PACMAN_LIST"
+    sudo pacman -Qen | awk '{print $1}' >> "$PACMAN_LIST"
 fi
 
 if [ ! -f "$AUR_LIST" ] || [ ! -s "$AUR_LIST" ]; then
@@ -52,7 +52,7 @@ if [ ! -f "$AUR_LIST" ] || [ ! -s "$AUR_LIST" ]; then
     echo "# Generated on $(date)" >> "$AUR_LIST"
     echo "# Format: package_name" >> "$AUR_LIST"
     # Get AUR packages
-    pacman -Qem | awk '{print $1}' >> "$AUR_LIST"
+    sudo pacman -Qem | awk '{print $1}' >> "$AUR_LIST"
 fi
 
 if [ ! -f "$PKGLIST" ] || [ ! -s "$PKGLIST" ]; then
@@ -131,10 +131,10 @@ update_pkglist() {
   mkdir -p "$PACKAGES_DIR"
 
   # Get explicitly installed pacman packages (excluding AUR)
-  pacman -Qen | awk '{print $1}' > "$PACMAN_LIST"
+  sudo pacman -Qen | awk '{print $1}' > "$PACMAN_LIST"
 
   # Get AUR packages
-  pacman -Qem | awk '{print $1}' > "$AUR_LIST"
+  sudo pacman -Qem | awk '{print $1}' > "$AUR_LIST"
 
   # Combine both for the full package list
   cat "$PACMAN_LIST" "$AUR_LIST" > "$PKGLIST"
@@ -177,7 +177,7 @@ install_packages() {
     # Skip empty lines and comments
     [[ -z "$pkg" || "$pkg" =~ ^# ]] && continue
 
-    if pacman -Si "$pkg" &> /dev/null; then
+    if sudo pacman -Si "$pkg" &> /dev/null; then
       echo "$pkg" >> "$PKGLIST_PACMAN"
     else
       echo "$pkg" >> "$PKGLIST_YAY"

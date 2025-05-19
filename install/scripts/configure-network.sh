@@ -47,9 +47,9 @@ check_requirements() {
   )
   
   for pkg in "${required_packages[@]}"; do
-    if ! pacman -Qi "$pkg" &>/dev/null; then
+    if ! sudo pacman -Qi "$pkg" &>/dev/null; then
       print_msg "Installing $pkg..."
-      pacman -S --noconfirm "$pkg" || error_exit "Failed to install $pkg"
+      sudo pacman -S --noconfirm "$pkg" || error_exit "Failed to install $pkg"
     fi
   done
 }

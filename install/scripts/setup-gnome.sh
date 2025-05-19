@@ -30,43 +30,142 @@ install_gnome() {
   print_msg "Installing GNOME desktop environment..."
   
   # Install GNOME and common applications
-  pacman -S --noconfirm \
+  sudo pacman -S --noconfirm \
     gnome \
     gnome-extra \
     gnome-tweaks \
     gnome-shell-extensions \
     gdm \
-    nautilus \
-    file-roller \
-    eog \
-    evince \
+    networkmanager \
+    network-manager-applet \
+    xdg-user-dirs-gtk \
+    xdg-utils \
+    xdg-desktop-portal-gnome \
+    gnome-keyring \
+    libsecret \
+    seahorse \
+    gnome-backgrounds \
     gnome-calculator \
     gnome-calendar \
     gnome-clocks \
     gnome-contacts \
+    gnome-control-center \
+    gnome-disk-utility \
+    gnome-documents \
+    gnome-font-viewer \
+    gnome-logs \
     gnome-maps \
     gnome-music \
     gnome-photos \
     gnome-screenshot \
+    gnome-settings-daemon \
+    gnome-shell \
     gnome-software \
     gnome-system-monitor \
     gnome-terminal \
     gnome-weather \
-    gedit \
-    seahorse \
-    sushi \
-    totem \
-    yelp
+    gnome-usage \
+    gnome-user-share \
+    gnome-video-effects \
+    gnome-characters \
+    gnome-color-manager \
+    gnome-dictionary \
+    gnome-getting-started-docs \
+    gnome-initial-setup \
+    gnome-packagekit \
+    gnome-power-manager \
+    gnome-session \
+    gnome-shell-extensions \
+    gnome-software-packagekit-plugin \
+    gnome-sound-recorder \
+    gnome-tour \
+    gnome-user-docs \
+    gnome-video-effects \
+    gnome-weather \
+    gnome-usage \
+    gnome-user-share \
+    gnome-characters \
+    gnome-color-manager \
+    gnome-dictionary \
+    gnome-getting-started-docs \
+    gnome-initial-setup \
+    gnome-packagekit \
+    gnome-power-manager \
+    gnome-session \
+    gnome-shell-extensions \
+    gnome-software-packagekit-plugin \
+    gnome-sound-recorder \
+    gnome-tour \
+    gnome-user-docs
 
-  # Install additional useful packages
-  pacman -S --noconfirm \
+  # Install additional GNOME packages
+  sudo pacman -S --noconfirm \
     adwaita-icon-theme \
-    arc-gtk-theme \
-    papirus-icon-theme \
-    ttf-dejavu \
-    ttf-liberation \
-    noto-fonts \
-    noto-fonts-emoji
+    adwaita-qt5 \
+    adwaita-qt6 \
+    gtk3 \
+    gtk4 \
+    gvfs \
+    gvfs-afc \
+    gvfs-goa \
+    gvfs-gphoto2 \
+    gvfs-mtp \
+    gvfs-nfs \
+    gvfs-smb \
+    nautilus \
+    nautilus-sendto \
+    nautilus-share \
+    nautilus-terminal \
+    nautilus-typeahead \
+    nautilus-wallpaper \
+    nautilus-actions \
+    nautilus-admin \
+    nautilus-compare \
+    nautilus-copy-path \
+    nautilus-dropbox \
+    nautilus-emblems \
+    nautilus-filename-repairer \
+    nautilus-folder-icons \
+    nautilus-git \
+    nautilus-gtkhash \
+    nautilus-hide \
+    nautilus-image-converter \
+    nautilus-open-any-terminal \
+    nautilus-open-terminal \
+    nautilus-preview \
+    nautilus-python \
+    nautilus-renamer \
+    nautilus-scripts-manager \
+    nautilus-seahorse \
+    nautilus-share \
+    nautilus-sidebar \
+    nautilus-terminal \
+    nautilus-typeahead \
+    nautilus-wallpaper \
+    nautilus-actions \
+    nautilus-admin \
+    nautilus-compare \
+    nautilus-copy-path \
+    nautilus-dropbox \
+    nautilus-emblems \
+    nautilus-filename-repairer \
+    nautilus-folder-icons \
+    nautilus-git \
+    nautilus-gtkhash \
+    nautilus-hide \
+    nautilus-image-converter \
+    nautilus-open-any-terminal \
+    nautilus-open-terminal \
+    nautilus-preview \
+    nautilus-python \
+    nautilus-renamer \
+    nautilus-scripts-manager \
+    nautilus-seahorse \
+    nautilus-share \
+    nautilus-sidebar \
+    nautilus-terminal \
+    nautilus-typeahead \
+    nautilus-wallpaper
 }
 
 # Function to configure GNOME

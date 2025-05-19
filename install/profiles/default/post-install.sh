@@ -10,6 +10,29 @@ print_msg() {
   echo -e "${BLUE}==>${NC} ${GREEN}$1${NC}"
 }
 
+# Create a new user interactively
+print_msg "Creating a new user..."
+read -p "Enter the username to create: " username
+if id "$username" &>/dev/null; then
+  echo "User $username already exists."
+  exit 1
+fi
+read -s -p "Enter password for $username: " password
+echo
+read -s -p "Confirm password: " password2
+echo
+if [[ "$password" != "$password2" ]]; then
+  echo "Passwords do not match."
+  exit 1
+fi
+useradd -m -G wheel -s /bin/bash "$username"
+echo "$username:$password" | chpasswd
+print_msg "User $username created and added to wheel group (sudoers)."
+
+# Configure sudo
+print_msg "Configuring sudo..."
+echo "%wheel ALL=(ALL) ALL" > /etc/sudoers.d/wheel
+
 # Set timezone
 print_msg "Setting timezone..."
 ln -sf /usr/share/zoneinfo/UTC /etc/localtime
@@ -19,7 +42,7 @@ hwclock --systohc
 print_msg "Setting locale..."
 echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
 locale-gen
-echo "LANG=en_US.UTF-8" > /etc/locale.conf
+echo "LANG=en_US.UTF-8" > /etc/local.conf
 
 # Set hostname
 print_msg "Setting hostname..."
@@ -37,15 +60,6 @@ print_msg "Installing bootloader..."
 pacman -S --noconfirm grub efibootmgr
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
-
-# Create a new user
-print_msg "Creating default user..."
-useradd -m -G wheel -s /bin/bash archuser
-echo "archuser:archuser" | chpasswd
-
-# Configure sudo
-print_msg "Configuring sudo..."
-echo "%wheel ALL=(ALL) ALL" > /etc/sudoers.d/wheel
 
 # Install additional packages
 print_msg "Installing additional packages..."
@@ -69,7 +83,7 @@ chmod 1777 /tmp
 
 # Install yay for AUR packages
 print_msg "Installing yay..."
-sudo -u archuser bash -c '
+sudo -u "$username" bash -c '
   rm -rf /tmp/yay
   cd /tmp
   git clone https://aur.archlinux.org/yay.git
