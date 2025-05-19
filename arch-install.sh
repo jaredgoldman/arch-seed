@@ -17,78 +17,39 @@ error_exit() {
   exit 1
 }
 
-# Function to detect available disks
-detect_disks() {
-  print_msg "Detecting available disks..."
-  
-  # Debug: Show current user and permissions
-  echo "Current user: $(whoami)"
-  echo "Current EUID: $EUID"
-  
-  # Debug: Show raw lsblk output
-  echo "Raw lsblk output:"
-  sudo lsblk -J -o NAME,SIZE,MODEL,TYPE
-  
-  # Get all block devices with more detailed information
-  local disks=()
-  
-  # Get all disk information at once using JSON format
-  local all_disks
-  all_disks=$(sudo lsblk -J -o NAME,SIZE,MODEL,TYPE)
-  
-  # Process JSON output
-  while IFS= read -r line; do
-    # Skip empty lines and non-device lines
-    [ -z "$line" ] && continue
-    [[ "$line" != *"\"type\":\"disk\""* ]] && continue
-    
-    # Extract device information
-    local name=$(echo "$line" | grep -o '"name":"[^"]*"' | cut -d'"' -f4)
-    local size=$(echo "$line" | grep -o '"size":"[^"]*"' | cut -d'"' -f4)
-    local model=$(echo "$line" | grep -o '"model":"[^"]*"' | cut -d'"' -f4)
-    
-    # Skip if any required field is missing
-    [ -z "$name" ] || [ -z "$size" ] || [ -z "$model" ] && continue
-    
-    # Add NVMe tag if it's an NVMe device
-    if [[ "$name" =~ ^nvme ]]; then
-      disks+=("$name (${size}) - $model [NVMe]")
-    else
-      disks+=("$name (${size}) - $model")
-    fi
-  done < <(echo "$all_disks" | grep -A 4 '"type":"disk"')
+# Ensure jq is installed
+if ! command -v jq &>/dev/null; then
+  echo "jq is required for this script. Installing with pacman..."
+  sudo pacman -Sy --noconfirm jq || { echo 'Failed to install jq'; exit 1; }
+fi
 
-  # If no disks found
-  if [ ${#disks[@]} -eq 0 ]; then
-    error_exit "No suitable disks found"
+print_msg "Detecting available disks..."
+
+# Get all disks using jq
+mapfile -t disks < <(lsblk -J -o NAME,SIZE,MODEL,TYPE | jq -r '.blockdevices[] | select(.type=="disk") | "\(.name) (\(.size)) - \(.model)"')
+
+if [ ${#disks[@]} -eq 0 ]; then
+  error_exit "No suitable disks found"
+fi
+
+print_msg "Available disks:"
+for i in "${!disks[@]}"; do
+  echo "$((i+1)). ${disks[$i]}"
+done
+
+while true; do
+  read -p "Select disk number (1-${#disks[@]}): " choice
+  if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le ${#disks[@]} ]; then
+    DISK="/dev/$(echo "${disks[$((choice-1))]}" | cut -d' ' -f1)"
+    break
   fi
-
-  # Print available disks
-  print_msg "Available disks:"
-  for i in "${!disks[@]}"; do
-    echo "$((i+1)). ${disks[$i]}"
-  done
-
-  # Get user selection
-  local choice
-  while true; do
-    read -p "Select disk number (1-${#disks[@]}): " choice
-    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le ${#disks[@]} ]; then
-      # Extract disk name from selection
-      DISK="/dev/$(echo "${disks[$((choice-1))]}" | cut -d' ' -f1)"
-      break
-    fi
-    echo "Invalid selection. Please try again."
-  done
-}
+  echo "Invalid selection. Please try again."
+done
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then
   error_exit "Please run as root"
 fi
-
-# Detect and select disk
-detect_disks
 
 print_msg "Selected disk: $DISK"
 read -p "Are you sure you want to partition $DISK? This will erase all data! (y/N): " confirm
