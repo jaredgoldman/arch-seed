@@ -27,30 +27,28 @@ detect_disks() {
   
   # Debug: Show raw lsblk output
   echo "Raw lsblk output:"
-  sudo lsblk -S -o NAME,SIZE,MODEL,TYPE
+  sudo lsblk -J -o NAME,SIZE,MODEL,TYPE
   
   # Get all block devices with more detailed information
   local disks=()
   
-  # Get all disk information at once
+  # Get all disk information at once using JSON format
   local all_disks
-  all_disks=$(sudo lsblk -S -o NAME,SIZE,MODEL,TYPE -n)
+  all_disks=$(sudo lsblk -J -o NAME,SIZE,MODEL,TYPE)
   
-  # Process each line
+  # Process JSON output
   while IFS= read -r line; do
-    # Skip empty lines
+    # Skip empty lines and non-device lines
     [ -z "$line" ] && continue
+    [[ "$line" != *"\"type\":\"disk\""* ]] && continue
     
-    # Get disk name and size
-    local name=$(echo "$line" | awk '{print $1}')
-    local size=$(echo "$line" | awk '{print $2}')
-    local model=$(echo "$line" | awk '{for(i=3;i<NF;i++) printf $i" "; print ""}')
-    local type=$(echo "$line" | awk '{print $NF}')
+    # Extract device information
+    local name=$(echo "$line" | grep -o '"name":"[^"]*"' | cut -d'"' -f4)
+    local size=$(echo "$line" | grep -o '"size":"[^"]*"' | cut -d'"' -f4)
+    local model=$(echo "$line" | grep -o '"model":"[^"]*"' | cut -d'"' -f4)
     
-    # Skip if not a disk
-    if [[ "$type" != "disk" ]]; then
-      continue
-    fi
+    # Skip if any required field is missing
+    [ -z "$name" ] || [ -z "$size" ] || [ -z "$model" ] && continue
     
     # Add NVMe tag if it's an NVMe device
     if [[ "$name" =~ ^nvme ]]; then
@@ -58,7 +56,7 @@ detect_disks() {
     else
       disks+=("$name (${size}) - $model")
     fi
-  done <<< "$all_disks"
+  done < <(echo "$all_disks" | grep -A 4 '"type":"disk"')
 
   # If no disks found
   if [ ${#disks[@]} -eq 0 ]; then
