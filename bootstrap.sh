@@ -25,7 +25,7 @@ fi
 
 # Clone the repository
 REPO_URL="https://github.com/jaredgoldman/arch-seed.git"  # Replace with your actual repo URL
-INSTALL_DIR="$HOME/.local/share/arch-setup"
+INSTALL_DIR="$HOME/.local/share/arch-seed"
 
 print_msg "Cloning repository..."
 git clone "$REPO_URL" "$INSTALL_DIR" || error_exit "Failed to clone repository"
