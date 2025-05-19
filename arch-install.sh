@@ -19,18 +19,19 @@ error_exit() {
 
 # Function to detect available disks
 detect_disks() {
-  # Get all block devices
+  # Get all block devices with more detailed information
   local disks=()
-  while IFS= read -r disk; do
+  while IFS= read -r line; do
     # Skip loop devices and partitions
-    if [[ "$disk" =~ loop[0-9]+$ ]] || [[ "$disk" =~ [0-9]+$ ]]; then
+    if [[ "$line" =~ loop[0-9]+$ ]] || [[ "$line" =~ [0-9]+$ ]]; then
       continue
     fi
-    # Get disk size
-    local size=$(lsblk -b -d -o SIZE -n "$disk")
-    size=$((size / 1024 / 1024 / 1024)) # Convert to GB
-    disks+=("$disk (${size}GB)")
-  done < <(lsblk -d -o NAME -n)
+    # Get disk name and size
+    local name=$(echo "$line" | awk '{print $1}')
+    local size=$(echo "$line" | awk '{print $2}')
+    local model=$(echo "$line" | awk '{for(i=3;i<=NF;i++) printf $i" "; print ""}')
+    disks+=("$name (${size}) - $model")
+  done < <(lsblk -d -o NAME,SIZE,MODEL -n)
 
   # If no disks found
   if [ ${#disks[@]} -eq 0 ]; then
