@@ -17,22 +17,12 @@ error_exit() {
   exit 1
 }
 
-# Check if git is installed
-if ! command -v git &> /dev/null; then
-  print_msg "Installing git..."
-  sudo pacman -S --noconfirm git || error_exit "Failed to install git"
-fi
-
-# Check if make is installed
-if ! command -v make &> /dev/null; then
-  print_msg "Installing make..."
-  sudo pacman -S --noconfirm make || error_exit "Failed to install make"
-fi
-
 # Set installation directory to current directory
 INSTALL_DIR="$(pwd)"
 
-print_msg "Installing from $INSTALL_DIR..."
+# Run the setup script first
+print_msg "Running initial setup..."
+./install/scripts/setup.sh install || error_exit "Failed to run setup script"
 
 # Install the tool
 print_msg "Installing arch-setup..."
@@ -68,3 +58,5 @@ print_msg "Setting up AWS CLI and Font Awesome..."
 # Run the i3 setup script
 print_msg "Setting up i3 window manager..."
 ./install/scripts/setup-i3.sh
+
+print_msg "Final setup complete! Your system is now fully configured."
