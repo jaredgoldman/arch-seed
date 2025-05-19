@@ -5,7 +5,7 @@ set -x
 # Default partitioning scheme for a typical desktop installation
 # Expects disk as first argument
 
-local disk="$1"
+disk="$1"
 
 # Unmount any existing partitions
 umount -R /mnt 2>/dev/null || true
