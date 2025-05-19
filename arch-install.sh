@@ -19,11 +19,30 @@ error_exit() {
 
 # Function to detect available disks
 detect_disks() {
+  print_msg "Detecting available disks..."
+  
+  # Debug: Show raw lsblk output
+  echo "Raw lsblk output:"
+  lsblk -d -o NAME,SIZE,MODEL,TYPE
+  
   # Get all block devices with more detailed information
   local disks=()
+  
+  # First check for NVMe devices
+  for nvme in /dev/nvme*; do
+    if [ -b "$nvme" ]; then
+      local name=$(basename "$nvme")
+      local size=$(lsblk -b -d -o SIZE -n "$nvme")
+      size=$((size / 1024 / 1024 / 1024)) # Convert to GB
+      local model=$(lsblk -d -o MODEL -n "$nvme")
+      disks+=("$name (${size}GB) - $model [NVMe]")
+    fi
+  done
+  
+  # Then check for other block devices
   while IFS= read -r line; do
-    # Skip loop devices and partitions
-    if [[ "$line" =~ loop[0-9]+$ ]] || [[ "$line" =~ [0-9]+$ ]]; then
+    # Skip loop devices, partitions, and NVMe (already handled)
+    if [[ "$line" =~ loop[0-9]+$ ]] || [[ "$line" =~ [0-9]+$ ]] || [[ "$line" =~ ^nvme ]]; then
       continue
     fi
     # Get disk name and size
