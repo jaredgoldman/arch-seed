@@ -9,10 +9,15 @@ check_chezmoi() {
   if ! command -v chezmoi &> /dev/null; then
     print_msg "Installing chezmoi..."
     # Install chezmoi using the official install script
-    sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply "$GITHUB_USERNAME"
+    sh -c "$(curl -fsLS get.chezmoi.io)" -- install
     if [ $? -ne 0 ]; then
       error_exit "Failed to install chezmoi"
     fi
+    # Verify installation
+    if ! command -v chezmoi &> /dev/null; then
+      error_exit "chezmoi installation failed - command not found"
+    fi
+    print_msg "chezmoi installed successfully"
   else
     print_msg "chezmoi is already installed"
   fi
