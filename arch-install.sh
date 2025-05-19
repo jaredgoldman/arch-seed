@@ -25,35 +25,20 @@ detect_disks() {
   echo "Current user: $(whoami)"
   echo "Current EUID: $EUID"
   
-  # Debug: Show all block devices
-  echo "All block devices:"
-  ls -l /dev/nvme* /dev/sd* 2>/dev/null || true
-  
   # Get all block devices with more detailed information
   local disks=()
   
-  # First check for NVMe devices
-  for nvme in /dev/nvme*; do
-    if [ -b "$nvme" ]; then
-      local name=$(basename "$nvme")
-      local size=$(sudo lsblk -b -d -o SIZE -n "$nvme")
-      size=$((size / 1024 / 1024 / 1024)) # Convert to GB
-      local model=$(sudo lsblk -d -o MODEL -n "$nvme")
-      disks+=("$name (${size}GB) - $model [NVMe]")
-    fi
-  done
-  
-  # Then get other block devices
-  local disk_info
-  disk_info=$(sudo lsblk -d -o NAME,SIZE,MODEL -n)
+  # Get all disk information at once
+  local all_disks
+  all_disks=$(sudo lsblk -d -o NAME,SIZE,MODEL -n)
   
   # Process each line
   while IFS= read -r line; do
     # Skip empty lines
     [ -z "$line" ] && continue
     
-    # Skip loop devices, partitions, and NVMe (already handled)
-    if [[ "$line" =~ loop[0-9]+$ ]] || [[ "$line" =~ [0-9]+$ ]] || [[ "$line" =~ ^nvme ]]; then
+    # Skip loop devices and partitions
+    if [[ "$line" =~ loop[0-9]+$ ]] || [[ "$line" =~ [0-9]+$ ]]; then
       continue
     fi
     
@@ -61,8 +46,14 @@ detect_disks() {
     local name=$(echo "$line" | awk '{print $1}')
     local size=$(echo "$line" | awk '{print $2}')
     local model=$(echo "$line" | awk '{for(i=3;i<=NF;i++) printf $i" "; print ""}')
-    disks+=("$name (${size}) - $model")
-  done <<< "$disk_info"
+    
+    # Add NVMe tag if it's an NVMe device
+    if [[ "$name" =~ ^nvme ]]; then
+      disks+=("$name (${size}) - $model [NVMe]")
+    else
+      disks+=("$name (${size}) - $model")
+    fi
+  done <<< "$all_disks"
 
   # If no disks found
   if [ ${#disks[@]} -eq 0 ]; then
