@@ -15,13 +15,20 @@ check_chezmoi() {
     fi
     # Verify installation
     if ! command -v chezmoi &> /dev/null; then
-      error_exit "chezmoi installation failed - command not found"
+      # Try adding common install locations to PATH
+      export PATH="$PATH:/root/.local/bin:/usr/local/bin"
+      if ! command -v chezmoi &> /dev/null; then
+        error_exit "chezmoi installation failed - command not found"
+      fi
     fi
     print_msg "chezmoi installed successfully"
   else
     print_msg "chezmoi is already installed"
   fi
 }
+
+# Add chezmoi install locations to PATH before any chezmoi command
+export PATH="$PATH:/root/.local/bin:/usr/local/bin"
 
 # Function to setup user
 setup_user() {
