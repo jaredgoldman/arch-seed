@@ -2,10 +2,16 @@
 set -euo pipefail
 set -x
 
+# Check for required argument
+disk=""
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 <disk>"
+  exit 1
+fi
+disk="$1"
+
 # Default partitioning scheme for a typical desktop installation
 # Expects disk as first argument
-
-disk="$1"
 
 # Unmount any existing partitions
 umount -R /mnt 2>/dev/null || true
