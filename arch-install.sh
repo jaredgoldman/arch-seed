@@ -17,13 +17,58 @@ error_exit() {
   exit 1
 }
 
+# Function to detect available disks
+detect_disks() {
+  # Get all block devices
+  local disks=()
+  while IFS= read -r disk; do
+    # Skip loop devices and partitions
+    if [[ "$disk" =~ loop[0-9]+$ ]] || [[ "$disk" =~ [0-9]+$ ]]; then
+      continue
+    fi
+    # Get disk size
+    local size=$(lsblk -b -d -o SIZE -n "$disk")
+    size=$((size / 1024 / 1024 / 1024)) # Convert to GB
+    disks+=("$disk (${size}GB)")
+  done < <(lsblk -d -o NAME -n)
+
+  # If no disks found
+  if [ ${#disks[@]} -eq 0 ]; then
+    error_exit "No suitable disks found"
+  fi
+
+  # Print available disks
+  print_msg "Available disks:"
+  for i in "${!disks[@]}"; do
+    echo "$((i+1)). ${disks[$i]}"
+  done
+
+  # Get user selection
+  local choice
+  while true; do
+    read -p "Select disk number (1-${#disks[@]}): " choice
+    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le ${#disks[@]} ]; then
+      # Extract disk name from selection
+      DISK="/dev/$(echo "${disks[$((choice-1))]}" | cut -d' ' -f1)"
+      break
+    fi
+    echo "Invalid selection. Please try again."
+  done
+}
+
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then
   error_exit "Please run as root"
 fi
 
-# Get disk from user
-read -p "Enter the disk to install to (e.g. /dev/sda): " DISK
+# Detect and select disk
+detect_disks
+
+print_msg "Selected disk: $DISK"
+read -p "Are you sure you want to partition $DISK? This will erase all data! (y/N): " confirm
+if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+  error_exit "Installation cancelled"
+fi
 
 # Run partitioning script
 print_msg "Partitioning disk..."
