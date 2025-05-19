@@ -29,15 +29,10 @@ if ! command -v make &> /dev/null; then
   sudo pacman -S --noconfirm make || error_exit "Failed to install make"
 fi
 
-# Clone the repository
-REPO_URL="https://github.com/jaredgoldman/arch-seed.git"  # Replace with your actual repo URL
-INSTALL_DIR="$HOME/.local/share/arch-seed"
+# Set installation directory to current directory
+INSTALL_DIR="$(pwd)"
 
-print_msg "Cloning repository..."
-git clone "$REPO_URL" "$INSTALL_DIR" || error_exit "Failed to clone repository"
-
-# Change to the installation directory
-cd "$INSTALL_DIR" || error_exit "Failed to change to installation directory"
+print_msg "Installing from $INSTALL_DIR..."
 
 # Install the tool
 print_msg "Installing arch-setup..."
