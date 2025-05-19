@@ -23,6 +23,12 @@ if ! command -v git &> /dev/null; then
   sudo pacman -S --noconfirm git || error_exit "Failed to install git"
 fi
 
+# Check if make is installed
+if ! command -v make &> /dev/null; then
+  print_msg "Installing make..."
+  sudo pacman -S --noconfirm make || error_exit "Failed to install make"
+fi
+
 # Clone the repository
 REPO_URL="https://github.com/jaredgoldman/arch-seed.git"  # Replace with your actual repo URL
 INSTALL_DIR="$HOME/.local/share/arch-seed"
