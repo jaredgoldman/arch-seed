@@ -28,29 +28,25 @@ detect_disks() {
   # Get all block devices with more detailed information
   local disks=()
   
-  # First check for NVMe devices
-  for nvme in /dev/nvme*; do
-    if [ -b "$nvme" ]; then
-      local name=$(basename "$nvme")
-      local size=$(lsblk -b -d -o SIZE -n "$nvme")
-      size=$((size / 1024 / 1024 / 1024)) # Convert to GB
-      local model=$(lsblk -d -o MODEL -n "$nvme")
-      disks+=("$name (${size}GB) - $model [NVMe]")
-    fi
-  done
-  
-  # Then check for other block devices
+  # First check for NVMe devices using lsblk
   while IFS= read -r line; do
-    # Skip loop devices, partitions, and NVMe (already handled)
-    if [[ "$line" =~ loop[0-9]+$ ]] || [[ "$line" =~ [0-9]+$ ]] || [[ "$line" =~ ^nvme ]]; then
+    # Skip loop devices and partitions
+    if [[ "$line" =~ loop[0-9]+$ ]] || [[ "$line" =~ [0-9]+$ ]]; then
       continue
     fi
     # Get disk name and size
     local name=$(echo "$line" | awk '{print $1}')
     local size=$(echo "$line" | awk '{print $2}')
     local model=$(echo "$line" | awk '{for(i=3;i<=NF;i++) printf $i" "; print ""}')
-    disks+=("$name (${size}) - $model")
-  done < <(lsblk -d -o NAME,SIZE,MODEL -n)
+    local type=$(echo "$line" | awk '{print $NF}')
+    
+    # Add NVMe tag if it's an NVMe device
+    if [[ "$name" =~ ^nvme ]]; then
+      disks+=("$name (${size}) - $model [NVMe]")
+    else
+      disks+=("$name (${size}) - $model")
+    fi
+  done < <(lsblk -d -o NAME,SIZE,MODEL,TYPE -n)
 
   # If no disks found
   if [ ${#disks[@]} -eq 0 ]; then
