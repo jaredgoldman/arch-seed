@@ -10,6 +10,13 @@ if [ $# -lt 1 ]; then
 fi
 disk="$1"
 
+# Determine partition prefix for NVMe devices
+if [[ "$disk" =~ nvme ]]; then
+  partprefix="p"
+else
+  partprefix=""
+fi
+
 # Default partitioning scheme for a typical desktop installation
 # Expects disk as first argument
 
@@ -31,12 +38,12 @@ parted "$disk" mkpart primary linux-swap 513MiB 17.5GiB
 parted "$disk" mkpart primary ext4 17.5GiB 100%
 
 # Format partitions
-mkfs.fat -F32 "${disk}1"
-mkswap "${disk}2"
-mkfs.ext4 "${disk}3"
+mkfs.fat -F32 "${disk}${partprefix}1"
+mkswap "${disk}${partprefix}2"
+mkfs.ext4 "${disk}${partprefix}3"
 
 # Mount partitions
-mount "${disk}3" /mnt
+mount "${disk}${partprefix}3" /mnt
 mkdir -p /mnt/boot/efi
-mount "${disk}1" /mnt/boot/efi
-swapon "${disk}2" 
+mount "${disk}${partprefix}1" /mnt/boot/efi
+swapon "${disk}${partprefix}2" 
