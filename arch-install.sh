@@ -25,27 +25,32 @@ detect_disks() {
   echo "Current user: $(whoami)"
   echo "Current EUID: $EUID"
   
+  # Debug: Show raw lsblk output
+  echo "Raw lsblk output:"
+  sudo lsblk -S -o NAME,SIZE,MODEL,TYPE
+  
   # Get all block devices with more detailed information
   local disks=()
   
   # Get all disk information at once
   local all_disks
-  all_disks=$(sudo lsblk -d -o NAME,SIZE,MODEL -n)
+  all_disks=$(sudo lsblk -S -o NAME,SIZE,MODEL,TYPE -n)
   
   # Process each line
   while IFS= read -r line; do
     # Skip empty lines
     [ -z "$line" ] && continue
     
-    # Skip loop devices and partitions
-    if [[ "$line" =~ loop[0-9]+$ ]] || [[ "$line" =~ [0-9]+$ ]]; then
-      continue
-    fi
-    
     # Get disk name and size
     local name=$(echo "$line" | awk '{print $1}')
     local size=$(echo "$line" | awk '{print $2}')
-    local model=$(echo "$line" | awk '{for(i=3;i<=NF;i++) printf $i" "; print ""}')
+    local model=$(echo "$line" | awk '{for(i=3;i<NF;i++) printf $i" "; print ""}')
+    local type=$(echo "$line" | awk '{print $NF}')
+    
+    # Skip if not a disk
+    if [[ "$type" != "disk" ]]; then
+      continue
+    fi
     
     # Add NVMe tag if it's an NVMe device
     if [[ "$name" =~ ^nvme ]]; then
