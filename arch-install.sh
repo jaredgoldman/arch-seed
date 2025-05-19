@@ -32,7 +32,11 @@ detect_disks() {
   # Get all block devices with more detailed information
   local disks=()
   
-  # First check for NVMe devices using lsblk with explicit sudo
+  # Create a temporary file for lsblk output
+  local temp_file=$(mktemp)
+  sudo lsblk -d -o NAME,SIZE,MODEL,TYPE -n > "$temp_file"
+  
+  # Process the output file
   while IFS= read -r line; do
     # Skip loop devices and partitions
     if [[ "$line" =~ loop[0-9]+$ ]] || [[ "$line" =~ [0-9]+$ ]]; then
@@ -50,7 +54,10 @@ detect_disks() {
     else
       disks+=("$name (${size}) - $model")
     fi
-  done < <(sudo lsblk -d -o NAME,SIZE,MODEL,TYPE -n)
+  done < "$temp_file"
+  
+  # Clean up temp file
+  rm -f "$temp_file"
 
   # If no disks found
   if [ ${#disks[@]} -eq 0 ]; then
