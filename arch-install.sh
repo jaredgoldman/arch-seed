@@ -21,14 +21,18 @@ error_exit() {
 detect_disks() {
   print_msg "Detecting available disks..."
   
-  # Debug: Show raw lsblk output
+  # Debug: Show current user and permissions
+  echo "Current user: $(whoami)"
+  echo "Current EUID: $EUID"
+  
+  # Debug: Show raw lsblk output with explicit sudo
   echo "Raw lsblk output:"
-  lsblk -d -o NAME,SIZE,MODEL,TYPE
+  sudo lsblk -d -o NAME,SIZE,MODEL,TYPE
   
   # Get all block devices with more detailed information
   local disks=()
   
-  # First check for NVMe devices using lsblk
+  # First check for NVMe devices using lsblk with explicit sudo
   while IFS= read -r line; do
     # Skip loop devices and partitions
     if [[ "$line" =~ loop[0-9]+$ ]] || [[ "$line" =~ [0-9]+$ ]]; then
@@ -46,7 +50,7 @@ detect_disks() {
     else
       disks+=("$name (${size}) - $model")
     fi
-  done < <(lsblk -d -o NAME,SIZE,MODEL,TYPE -n)
+  done < <(sudo lsblk -d -o NAME,SIZE,MODEL,TYPE -n)
 
   # If no disks found
   if [ ${#disks[@]} -eq 0 ]; then
