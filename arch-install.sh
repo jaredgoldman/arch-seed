@@ -20,7 +20,7 @@ error_exit() {
 # Ensure jq is installed
 if ! command -v jq &>/dev/null; then
   echo "jq is required for this script. Installing with pacman..."
-  sudo pacman -Sy --noconfirm jq || { echo 'Failed to install jq'; exit 1; }
+  pacman -Sy --noconfirm jq || { echo 'Failed to install jq'; exit 1; }
 fi
 
 print_msg "Detecting available disks..."
