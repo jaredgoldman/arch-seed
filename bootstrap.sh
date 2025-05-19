@@ -24,7 +24,7 @@ if ! command -v git &> /dev/null; then
 fi
 
 # Clone the repository
-REPO_URL="https://github.com/jaredgoldman/arch-setup.git"  # Replace with your actual repo URL
+REPO_URL="https://github.com/jaredgoldman/arch-seed.git"  # Replace with your actual repo URL
 INSTALL_DIR="$HOME/.local/share/arch-setup"
 
 print_msg "Cloning repository..."
