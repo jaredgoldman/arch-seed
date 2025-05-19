@@ -64,14 +64,18 @@ print_msg "Enabling services..."
 systemctl enable NetworkManager
 systemctl enable sshd
 
+# Ensure /tmp is world-writable
+chmod 1777 /tmp
+
 # Install yay for AUR packages
 print_msg "Installing yay..."
-cd /tmp
-git clone https://aur.archlinux.org/yay.git
-cd yay
-sudo -u archuser makepkg -si --noconfirm
-cd /
-rm -rf /tmp/yay
+sudo -u archuser bash -c '
+  rm -rf /tmp/yay
+  cd /tmp
+  git clone https://aur.archlinux.org/yay.git
+  cd yay
+  makepkg -si --noconfirm
+'
 
 # Set up the arch-setup tool
 print_msg "Setting up arch-setup..."
