@@ -40,27 +40,27 @@ PKGLIST="$PACKAGES_DIR/pkglist.txt"
 
 # Create package list files if they don't exist and populate them
 if [ ! -f "$PACMAN_LIST" ] || [ ! -s "$PACMAN_LIST" ]; then
-    echo "# List of explicitly installed pacman packages" > "$PACMAN_LIST"
-    echo "# Generated on $(date)" >> "$PACMAN_LIST"
-    echo "# Format: package_name" >> "$PACMAN_LIST"
-    # Get explicitly installed pacman packages
-    sudo pacman -Qen | awk '{print $1}' >> "$PACMAN_LIST"
+  echo "# List of explicitly installed pacman packages" >"$PACMAN_LIST"
+  echo "# Generated on $(date)" >>"$PACMAN_LIST"
+  echo "# Format: package_name" >>"$PACMAN_LIST"
+  # Get explicitly installed pacman packages
+  sudo pacman -Qen | awk '{print $1}' >>"$PACMAN_LIST"
 fi
 
 if [ ! -f "$AUR_LIST" ] || [ ! -s "$AUR_LIST" ]; then
-    echo "# List of explicitly installed AUR packages" > "$AUR_LIST"
-    echo "# Generated on $(date)" >> "$AUR_LIST"
-    echo "# Format: package_name" >> "$AUR_LIST"
-    # Get AUR packages
-    sudo pacman -Qem | awk '{print $1}' >> "$AUR_LIST"
+  echo "# List of explicitly installed AUR packages" >"$AUR_LIST"
+  echo "# Generated on $(date)" >>"$AUR_LIST"
+  echo "# Format: package_name" >>"$AUR_LIST"
+  # Get AUR packages
+  sudo pacman -Qem | awk '{print $1}' >>"$AUR_LIST"
 fi
 
 if [ ! -f "$PKGLIST" ] || [ ! -s "$PKGLIST" ]; then
-    echo "# Combined list of all installed packages" > "$PKGLIST"
-    echo "# Generated on $(date)" >> "$PKGLIST"
-    echo "# Format: package_name" >> "$PKGLIST"
-    # Combine both lists
-    cat "$PACMAN_LIST" "$AUR_LIST" | grep -v "^#" >> "$PKGLIST"
+  echo "# Combined list of all installed packages" >"$PKGLIST"
+  echo "# Generated on $(date)" >>"$PKGLIST"
+  echo "# Format: package_name" >>"$PKGLIST"
+  # Combine both lists
+  cat "$PACMAN_LIST" "$AUR_LIST" | grep -v "^#" >>"$PKGLIST"
 fi
 
 # Function to install yay
@@ -69,7 +69,7 @@ install_yay() {
   print_msg "Installing yay..."
 
   # Check for git and base-devel
-  if ! command -v git &> /dev/null; then
+  if ! command -v git &>/dev/null; then
     sudo pacman -Sy --noconfirm git || error_exit "Failed to install git"
   fi
 
@@ -89,7 +89,7 @@ setup_chezmoi() {
   print_msg "Setting up chezmoi for dotfile management..."
 
   # Check if chezmoi is installed
-  if ! command -v chezmoi &> /dev/null; then
+  if ! command -v chezmoi &>/dev/null; then
     # Download and install chezmoi
     print_msg "Downloading chezmoi..."
     curl -sfL https://git.io/chezmoi | sh || error_exit "Failed to download chezmoi"
@@ -105,14 +105,18 @@ setup_chezmoi() {
     if [ -d "$REPO_DIR/chezmoi" ]; then
       chezmoi init --source="$REPO_DIR/chezmoi" || error_exit "Failed to initialize chezmoi"
     else
-      # Initialize with empty source
-      chezmoi init || error_exit "Failed to initialize chezmoi"
+      # Initialize chezmoi and let it create its own source directory
+      print_msg "Initializing chezmoi..."
 
-      # Create chezmoi source directory in repo
-      mkdir -p "$REPO_DIR/chezmoi"
-      chezmoi cd
-      git remote add origin "$REPO_DIR"
-      cd - || error_exit "Failed to return to previous directory"
+      # Initialize chezmoi (this creates ~/.local/share/chezmoi)
+      chezmoi init --apply || error_exit "Failed to initialize chezmoi"
+
+      # If you want to link it to your repo directory
+      if [ ! -d "$REPO_DIR/chezmoi" ]; then
+        mkdir -p "$REPO_DIR/chezmoi"
+        # Copy the initialized chezmoi source to your repo
+        cp -r "$HOME/.local/share/chezmoi/." "$REPO_DIR/chezmoi/"
+      fi
     fi
   else
     print_msg "chezmoi is already initialized."
@@ -131,13 +135,13 @@ update_pkglist() {
   mkdir -p "$PACKAGES_DIR"
 
   # Get explicitly installed pacman packages (excluding AUR)
-  sudo pacman -Qen | awk '{print $1}' > "$PACMAN_LIST"
+  sudo pacman -Qen | awk '{print $1}' >"$PACMAN_LIST"
 
   # Get AUR packages
-  sudo pacman -Qem | awk '{print $1}' > "$AUR_LIST"
+  sudo pacman -Qem | awk '{print $1}' >"$AUR_LIST"
 
   # Combine both for the full package list
-  cat "$PACMAN_LIST" "$AUR_LIST" > "$PKGLIST"
+  cat "$PACMAN_LIST" "$AUR_LIST" >"$PKGLIST"
 
   print_msg "Package lists updated at $(date)"
 
@@ -160,15 +164,15 @@ install_packages() {
   PKGLIST_YAY="$HOME/pkglist_yay.txt"
 
   # Clear old lists
-  > "$PKGLIST_PACMAN"
-  > "$PKGLIST_YAY"
+  >"$PKGLIST_PACMAN"
+  >"$PKGLIST_YAY"
 
   # Check if we should use the combined list or separate lists
   if [ -f "$PKGLIST" ]; then
     SOURCE_LIST="$PKGLIST"
   else
     # Combine pacman and AUR lists if separate
-    cat "$PACMAN_LIST" "$AUR_LIST" > "$HOME/combined_pkglist.txt"
+    cat "$PACMAN_LIST" "$AUR_LIST" >"$HOME/combined_pkglist.txt"
     SOURCE_LIST="$HOME/combined_pkglist.txt"
   fi
 
@@ -177,25 +181,25 @@ install_packages() {
     # Skip empty lines and comments
     [[ -z "$pkg" || "$pkg" =~ ^# ]] && continue
 
-    if sudo pacman -Si "$pkg" &> /dev/null; then
-      echo "$pkg" >> "$PKGLIST_PACMAN"
+    if sudo pacman -Si "$pkg" &>/dev/null; then
+      echo "$pkg" >>"$PKGLIST_PACMAN"
     else
-      echo "$pkg" >> "$PKGLIST_YAY"
+      echo "$pkg" >>"$PKGLIST_YAY"
     fi
-  done < "$SOURCE_LIST"
+  done <"$SOURCE_LIST"
 
   # Run the pacman installation as root
   if [ -s "$PKGLIST_PACMAN" ]; then
     print_msg "Installing packages from $PKGLIST_PACMAN using pacman..."
     sudo pacman -Syu --needed --noconfirm || error_exit "Failed to update system"
-    sudo pacman -S --needed --noconfirm - < "$PKGLIST_PACMAN" || print_msg "Some packages were not found in pacman, they might need to be installed with yay."
+    sudo pacman -S --needed --noconfirm - <"$PKGLIST_PACMAN" || print_msg "Some packages were not found in pacman, they might need to be installed with yay."
   fi
 
   # Install packages from pkglist_yay.txt using yay as non-root
   if [ -s "$PKGLIST_YAY" ]; then
     print_msg "Installing packages from $PKGLIST_YAY using yay..."
     # Make sure yay is installed
-    if ! command -v yay &> /dev/null; then
+    if ! command -v yay &>/dev/null; then
       install_yay
     fi
     xargs -a "$PKGLIST_YAY" yay -S --needed --noconfirm || error_exit "Failed to install some packages using yay"
@@ -215,7 +219,7 @@ setup_git_hooks() {
   mkdir -p "$HOOKS_DIR"
 
   # Create pre-commit hook
-  cat > "$HOOKS_DIR/pre-commit" << 'EOF'
+  cat >"$HOOKS_DIR/pre-commit" <<'EOF'
 #!/bin/bash
 # pre-commit hook to ensure package lists are up-to-date
 
@@ -240,73 +244,73 @@ EOF
 
 # Main function to handle different commands
 main() {
-  local command="${1:-}"  # Default to empty string if no argument provided
-  
+  local command="${1:-}" # Default to empty string if no argument provided
+
   case "$command" in
-    install)
-      # Full installation
-      setup_chezmoi
-      install_packages
-      setup_git_hooks
-      ;;
-    update)
-      # Update package lists
-      update_pkglist
-      ;;
-    sync)
-      # Update package lists and push to git
-      update_pkglist
-      cd "$REPO_DIR" || error_exit "Failed to change to repo directory"
-      git push || print_msg "Failed to push changes, please push manually"
-      cd - || error_exit "Failed to return to previous directory"
-      ;;
-    diff)
-      # Show differences between installed and tracked packages
-      print_msg "Showing package differences..."
+  install)
+    # Full installation
+    setup_chezmoi
+    install_packages
+    setup_git_hooks
+    ;;
+  update)
+    # Update package lists
+    update_pkglist
+    ;;
+  sync)
+    # Update package lists and push to git
+    update_pkglist
+    cd "$REPO_DIR" || error_exit "Failed to change to repo directory"
+    git push || print_msg "Failed to push changes, please push manually"
+    cd - || error_exit "Failed to return to previous directory"
+    ;;
+  diff)
+    # Show differences between installed and tracked packages
+    print_msg "Showing package differences..."
 
-      # Create temporary lists
-      TEMP_PACMAN=$(mktemp)
-      TEMP_AUR=$(mktemp)
+    # Create temporary lists
+    TEMP_PACMAN=$(mktemp)
+    TEMP_AUR=$(mktemp)
 
-      # Get current packages
-      pacman -Qen | awk '{print $1}' | sort > "$TEMP_PACMAN"
-      pacman -Qem | awk '{print $1}' | sort > "$TEMP_AUR"
+    # Get current packages
+    pacman -Qen | awk '{print $1}' | sort >"$TEMP_PACMAN"
+    pacman -Qem | awk '{print $1}' | sort >"$TEMP_AUR"
 
-      # Compare pacman packages
-      print_msg "Pacman packages installed but not tracked:"
-      comm -23 "$TEMP_PACMAN" <(sort "$PACMAN_LIST")
+    # Compare pacman packages
+    print_msg "Pacman packages installed but not tracked:"
+    comm -23 "$TEMP_PACMAN" <(sort "$PACMAN_LIST")
 
-      print_msg "Pacman packages tracked but not installed:"
-      comm -13 "$TEMP_PACMAN" <(sort "$PACMAN_LIST")
+    print_msg "Pacman packages tracked but not installed:"
+    comm -13 "$TEMP_PACMAN" <(sort "$PACMAN_LIST")
 
-      # Compare AUR packages
-      print_msg "AUR packages installed but not tracked:"
-      comm -23 "$TEMP_AUR" <(sort "$AUR_LIST")
+    # Compare AUR packages
+    print_msg "AUR packages installed but not tracked:"
+    comm -23 "$TEMP_AUR" <(sort "$AUR_LIST")
 
-      print_msg "AUR packages tracked but not installed:"
-      comm -13 "$TEMP_AUR" <(sort "$AUR_LIST")
+    print_msg "AUR packages tracked but not installed:"
+    comm -13 "$TEMP_AUR" <(sort "$AUR_LIST")
 
-      # Clean up
-      rm "$TEMP_PACMAN" "$TEMP_AUR"
-      ;;
-    setup-hooks)
-      # Just set up git hooks
-      setup_git_hooks
-      ;;
-    help|--help|-h|"")
-      echo "Usage: $0 {install|update|sync|diff|setup-hooks}"
-      echo "  install     - Full installation of packages and setup"
-      echo "  update      - Update package lists from current system"
-      echo "  sync        - Update package lists and push to git"
-      echo "  diff        - Show differences between installed and tracked packages"
-      echo "  setup-hooks - Set up git hooks for automatic tracking"
-      ;;
-    *)
-      # Default to full installation
-      setup_chezmoi
-      install_packages
-      setup_git_hooks
-      ;;
+    # Clean up
+    rm "$TEMP_PACMAN" "$TEMP_AUR"
+    ;;
+  setup-hooks)
+    # Just set up git hooks
+    setup_git_hooks
+    ;;
+  help | --help | -h | "")
+    echo "Usage: $0 {install|update|sync|diff|setup-hooks}"
+    echo "  install     - Full installation of packages and setup"
+    echo "  update      - Update package lists from current system"
+    echo "  sync        - Update package lists and push to git"
+    echo "  diff        - Show differences between installed and tracked packages"
+    echo "  setup-hooks - Set up git hooks for automatic tracking"
+    ;;
+  *)
+    # Default to full installation
+    setup_chezmoi
+    install_packages
+    setup_git_hooks
+    ;;
   esac
 }
 
