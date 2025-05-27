@@ -84,33 +84,45 @@ install_yay() {
   print_msg "yay installed successfully"
 }
 
-# Setup chezmoi for dotfile management
 setup_chezmoi() {
   print_msg "Setting up chezmoi for dotfile management..."
 
   # Check if chezmoi is installed
   if ! command -v chezmoi &>/dev/null; then
-    # Download and install chezmoi
     print_msg "Downloading chezmoi..."
     curl -sfL https://git.io/chezmoi | sh || error_exit "Failed to download chezmoi"
-
-    # Add chezmoi to PATH for this session
     export PATH="$PWD/bin:$PATH"
-
-    # Optionally move chezmoi to a permanent location
-    if [ -f "./bin/chezmoi" ]; then
-      # Move to ~/.local/bin (create if it doesn't exist)
-      mkdir -p "$HOME/.local/bin"
-      mv "./bin/chezmoi" "$HOME/.local/bin/"
-      # Ensure ~/.local/bin is in PATH
-      export PATH="$HOME/.local/bin:$PATH"
-    fi
   else
     print_msg "chezmoi is already installed."
   fi
-  # Pull and apply the latest chezmoi changes
-  print_msg "Pulling and applying the latest chezmoi changes..."
-  chezmoi update || error_exit "Failed to update chezmoi configuration"
+
+  # Create the chezmoi directories first
+  mkdir -p "$HOME/.local/share/chezmoi"
+  mkdir -p "$HOME/.config/chezmoi"
+
+  # Check if chezmoi is initialized (look for .git or any content)
+  if [ ! -d "$HOME/.local/share/chezmoi/.git" ] && [ -z "$(ls -A "$HOME/.local/share/chezmoi" 2>/dev/null)" ]; then
+    print_msg "Initializing chezmoi..."
+
+    if [ -d "$REPO_DIR/chezmoi" ]; then
+      # Copy existing chezmoi config to the chezmoi directory first
+      cp -r "$REPO_DIR/chezmoi/." "$HOME/.local/share/chezmoi/"
+      chezmoi init || error_exit "Failed to initialize chezmoi"
+    else
+      # Initialize chezmoi from scratch
+      chezmoi init || error_exit "Failed to initialize chezmoi"
+
+      # Create repo directory and copy initialized content
+      mkdir -p "$REPO_DIR/chezmoi"
+      cp -r "$HOME/.local/share/chezmoi/." "$REPO_DIR/chezmoi/"
+    fi
+  else
+    print_msg "chezmoi is already initialized."
+  fi
+
+  # Apply chezmoi configuration
+  print_msg "Applying chezmoi configuration..."
+  chezmoi apply || error_exit "Failed to apply chezmoi configuration"
 }
 
 # Function to update package lists
