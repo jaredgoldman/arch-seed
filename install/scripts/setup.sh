@@ -93,35 +93,21 @@ setup_chezmoi() {
     # Download and install chezmoi
     print_msg "Downloading chezmoi..."
     curl -sfL https://git.io/chezmoi | sh || error_exit "Failed to download chezmoi"
+
+    # Add chezmoi to PATH for this session
+    export PATH="$PWD/bin:$PATH"
+
+    # Optionally move chezmoi to a permanent location
+    if [ -f "./bin/chezmoi" ]; then
+      # Move to ~/.local/bin (create if it doesn't exist)
+      mkdir -p "$HOME/.local/bin"
+      mv "./bin/chezmoi" "$HOME/.local/bin/"
+      # Ensure ~/.local/bin is in PATH
+      export PATH="$HOME/.local/bin:$PATH"
+    fi
   else
     print_msg "chezmoi is already installed."
   fi
-
-  # Check if chezmoi is initialized
-  if [ ! -d "$HOME/.local/share/chezmoi" ]; then
-    print_msg "Initializing chezmoi..."
-
-    # If we have a chezmoi source directory in the repo, use it
-    if [ -d "$REPO_DIR/chezmoi" ]; then
-      chezmoi init --source="$REPO_DIR/chezmoi" || error_exit "Failed to initialize chezmoi"
-    else
-      # Initialize chezmoi and let it create its own source directory
-      print_msg "Initializing chezmoi..."
-
-      # Initialize chezmoi (this creates ~/.local/share/chezmoi)
-      chezmoi init --apply || error_exit "Failed to initialize chezmoi"
-
-      # If you want to link it to your repo directory
-      if [ ! -d "$REPO_DIR/chezmoi" ]; then
-        mkdir -p "$REPO_DIR/chezmoi"
-        # Copy the initialized chezmoi source to your repo
-        cp -r "$HOME/.local/share/chezmoi/." "$REPO_DIR/chezmoi/"
-      fi
-    fi
-  else
-    print_msg "chezmoi is already initialized."
-  fi
-
   # Pull and apply the latest chezmoi changes
   print_msg "Pulling and applying the latest chezmoi changes..."
   chezmoi update || error_exit "Failed to update chezmoi configuration"
